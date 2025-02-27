@@ -13,7 +13,8 @@ import {Appbar, BottomNavigation} from "react-native-paper";
 import * as Location from "expo-location";
 import GestureRecognizer from "react-native-swipe-gestures";
 
-
+// https://api.open-meteo.com/v1/forecast?latitude=45.6958&longitude=-0.3287&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min // currently + weekly
+// https://api.open-meteo.com/v1/forecast?latitude=45.6958&longitude=-0.3287&hourly=temperature_2m,weather_code,wind_speed_10m&forecast_days=1 // today per hour
 export default function Index() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [searchPressed, setSearchPressed] = useState(false);
