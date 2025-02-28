@@ -11,9 +11,11 @@ import {
 	TouchableWithoutFeedback,
 	View
 } from "react-native";
-import {Appbar, BottomNavigation} from "react-native-paper";
+import {Appbar, BottomNavigation, Icon} from "react-native-paper";
 import * as Location from "expo-location";
 import {GestureHandlerRootView, PanGestureHandler} from "react-native-gesture-handler";
+import {BlurView} from "expo-blur";
+import {LineChart} from "react-native-chart-kit";
 
 export default function Index() {
 	const [searchQuery, setSearchQuery] = useState("");
@@ -32,75 +34,79 @@ export default function Index() {
 	const [isSwiping, setIsSwiping] = useState(false);
 	const [swipeTimeout, setSwipeTimeout] = useState(null);
 
+	const getData = () => {
+		return {
+			labels: weather.daily.time,
+			datasets: [
+				{
+					data: weather.daily.temperature_2m,
+					color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`, // optional
+					strokeWidth: 2
+				}
+			],
+			legend: ["Rainy Days"]
+		}
+	};
+
+	const chartConfig = {
+		color: (opacity = 1) => `gray`,
+		strokeWidth: 5,
+	};
+
 	const routes = [
 		{key: "currently", title: "Currently", focusedIcon: "calendar-today"},
 		{key: "today", title: "Today", focusedIcon: "calendar-week"},
 		{key: "weekly", title: "Weekly", focusedIcon: "calendar-month"},
 	];
 
-	const getWeatherDescription = (code: number) => {
+	const getWeatherIconAndColor = (code: number) => {
 		switch (code) {
 			case 0:
-				return "Clear";
-
+				return {icon: "weather-sunny", color: "yellow", description: "Clear"};
 			case 1:
 			case 2:
+				return {icon: "weather-partly-cloudy", color: "yellow", description: "Partly cloudy"};
 			case 3:
-				return "Partly cloudy";
-
+				return {icon: "weather-cloudy", color: "lightgray", description: "Cloudy"};
 			case 45:
 			case 48:
-				return "Fog";
-
+				return {icon: "weather-fog", color: "gray", description: "Fog"};
 			case 51:
 			case 53:
 			case 55:
-				return "Drizzle";
-
 			case 56:
 			case 57:
-				return "Freezing drizzle"
-
+				return {icon: "weather-hail", color: "blue", description: "Drizzle"};
 			case 61:
 			case 63:
 			case 65:
-				return "Rain";
-
 			case 66:
 			case 67:
-				return "Freezing rain";
-
+				return {icon: "weather-rainy", color: "blue", description: "Rainy"};
 			case 71:
 			case 73:
 			case 75:
-				return "Snow fall";
-
 			case 77:
-				return "Snow grains";
-
+				return {icon: "weather-snowy-heavy", color: "lightblue", description: "Snowy"};
 			case 80:
 			case 81:
 			case 82:
-				return "Rain showers";
-
 			case 85:
 			case 86:
-				return "Rain showers";
-
+				return {icon: "weather-pouring", color: "blue", description: "Heavy rain"};
 			case 95:
-				return "Thunderstorm";
-
+				return {icon: "weather-lightning", color: "#404344", description: "Thunderstorm"};
 			case 96:
 			case 99:
-				return "Thunderstorm and hail";
-
+				return {icon: "weather-lightning-rainy", color: "#404344", description: "Thunderstorm with rain"};
 			default:
-				return "Unkown";
+				return {icon: "weather-cloudy", color: "gray", description: "Unknown"};
 		}
 	};
 
+
 	const handlePanGesture = (event) => {
-		const { translationX, translationY } = event.nativeEvent;
+		const {translationX, translationY} = event.nativeEvent;
 		const SENSITIVITY_THRESHOLD = 50;
 
 		if (!isSwiping && Math.abs(translationX) > Math.abs(translationY) && Math.abs(translationX) > SENSITIVITY_THRESHOLD) {
@@ -144,6 +150,8 @@ export default function Index() {
 				dailyResponse.json()
 			]);
 
+			console.log(weeklyData.current);
+
 			setWeather({
 				current: weeklyData.current,
 				daily: dailyData.hourly,
@@ -179,7 +187,7 @@ export default function Index() {
 	};
 
 	useEffect(() => {
-		fetchCities(searchQuery, 20);
+		fetchCities(searchQuery, 5);
 	}, [searchQuery]);
 
 	const handleSearchPress = () => {
@@ -269,15 +277,16 @@ export default function Index() {
 								)}
 								<ScrollView contentContainerStyle={{flexGrow: 1}}>
 									<View style={{flex: 1, padding: 20}} onStartShouldSetResponder={() => true}>
-										{!errorMsg && <Text style={styles.text}>{text}</Text>}
+										{!errorMsg && <Text style={[styles.text, {fontSize: 40}]}>{text}</Text>}
 										{!errorMsg && locationPressed ?
-											(<Text style={styles.text}>
+											(<Text style={[styles.text, {fontSize: 20}]}>
 												Your position
 											</Text>) : !errorMsg && lastResponse &&
-											(<Text style={styles.text}>
-												{lastResponse.name}{"\n"}
-												{lastResponse.admin1}{"\n"}
-												{lastResponse.country}
+											(<Text style={[styles.text, {fontSize: 20}]}>
+												<Text style={{fontWeight: "bold"}}>
+													{lastResponse.name}{" "}
+												</Text>
+												{lastResponse.admin1}{lastResponse.admin1 && ","} {lastResponse.country}
 											</Text>)
 										}
 										{
@@ -286,17 +295,112 @@ export default function Index() {
 													<Text style={styles.errorText}>{errorMsg}</Text>
 												</View>
 											) : index === 0 && weather && weather.current ? (
-												<Text style={styles.text}>
-													{weather.current.temperature_2m}°C{"\n"}
-													{getWeatherDescription(weather.current.weather_code)}{"\n"}
-													{weather.current.wind_speed_10m}km/h
-												</Text>
+												<View style={{flex: 1, marginTop: 50}}>
+													<View style={{display: "flex", flexDirection: "row"}}>
+														<View style={{flex: 4}}>
+															<BlurView
+																intensity={30}
+																tint="dark"
+																style={styles.blurview}
+															>
+																<Icon
+																	source="thermometer"
+																	color={weather.current.temperature_2m > 20 ? "red" : weather.current.temperature_2m > 12 ? "orange" : "#00d0f5"}
+																	size={80}
+																/>
+																<Text style={styles.blurtext}>
+																	{weather.current.temperature_2m}
+																	<Icon size={20} source="temperature-celsius"
+																		  color={"white"}/>
+																</Text>
+
+															</BlurView>
+														</View>
+														<View style={{flex: 3}}>
+															<BlurView intensity={30} tint="dark"
+																	  style={[styles.blurview, {justifyContent: "center"}]}>
+																{/* Exécuter la logique en dehors du JSX */}
+																{(() => {
+																	const {
+																		icon,
+																		color,
+																		description
+																	} = getWeatherIconAndColor(weather.current.weather_code);
+																	return (
+																		<View>
+																			<Icon
+																				style={{justifyContent: "center"}}
+																				source={icon}
+																				color={color}
+																				size={80}
+																			/>
+																			<Text style={{
+																				textAlign: "center",
+																				color: "white"
+																			}}>{description}</Text>
+																		</View>
+																	);
+																})()}
+															</BlurView>
+														</View>
+													</View>
+													<View>
+														<BlurView
+															intensity={30}
+															tint="dark"
+															style={styles.blurview}
+														>
+															<Icon
+																source="weather-windy"
+																color={"lightgray"}
+																size={80}
+															/>
+															<Text style={styles.blurtext}>
+																{weather.current.wind_speed_10m} km/h
+															</Text>
+														</BlurView>
+													</View>
+												</View>
 											) : index === 1 && weather && weather.daily && weather.daily.time ? (
-												weather.daily.time.map((entry, index) => (
-													<Text key={index} style={styles.text}>
-														{entry.split("T")[1]} {weather.daily.temperature_2m[index]}°C {getWeatherDescription(weather.daily.weather_code[index])} {weather.daily.wind_speed_10m[index]} km/h
-													</Text>
-												))
+												<LineChart
+													data={getData()}
+													width={320}
+													height={256}
+													verticalLabelRotation={30}
+													chartConfig={chartConfig}
+													formatXLabel={(label) => {
+														const hour = label.split('T')[1];
+														const test = parseInt(hour.split(':')[0]);
+														return test % 4 === 0 ? hour : '';
+													}}
+													bezier
+												/>
+												// weather.daily.time.map((entry, index) => (
+												// <View>
+												// 	<View style={{flex: 1}}>
+												// 		<BlurView intensity={30} tint="dark"
+												// 				  style={[styles.blurview, {justifyContent: "center"}]}>
+												// 			{/* Exécuter la logique en dehors du JSX */}
+												// 			{(() => {
+												// 				const {
+												// 					icon,
+												// 					color
+												// 				} = getWeatherIconAndColor(weather.current.weather_code);
+												// 				return (
+												// 					<Icon
+												// 						source={icon}
+												// 						color={color}
+												// 						size={80}
+												// 					/>
+												// 				);
+												// 			})()}
+												// 		</BlurView>
+												// 	</View>
+												// 	<Text key={index} style={styles.text}>
+												// 		{entry.split("T")[1]} {weather.daily.temperature_2m[index]}°C {getWeatherDescription(weather.daily.weather_code[index])} {weather.daily.wind_speed_10m[index]} km/h
+												// 	</Text>
+												// </View>
+												// ))
 											) : index === 2 && weather && weather.weekly && weather.weekly.time && (
 												weather.weekly.time.map((entry, index) => (
 													<Text key={index} style={styles.text}>
@@ -377,7 +481,8 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 	},
 	text: {
-		fontSize: 20,
+		fontWeight: '300',
+		color: 'white',
 		textAlign: "center",
 	},
 	errorText: {
@@ -385,5 +490,22 @@ const styles = StyleSheet.create({
 		color: "red",
 		textAlign: "center",
 	},
+	blurview: {
+		overflow: "hidden",
+		flex: 1,
+		flexDirection: "row",
+		alignItems: "center",
+		padding: 10,
+		margin: 5,
+		top: 0, left: 0, right: 0, bottom: 0,
+		borderRadius: 10,
+	},
+	blurtext: {
+		flex: 1,
+		fontSize: 30,
+		color: 'white',
+		fontWeight: 'bold',
+		textAlign: "center"
+	}
 });
 
