@@ -1,7 +1,9 @@
 import React, {useEffect, useState} from "react";
 import {
 	FlatList,
+	ImageBackground,
 	Keyboard,
+	ScrollView,
 	StyleSheet,
 	Text,
 	TextInput,
@@ -12,20 +14,21 @@ import {
 import {Appbar, BottomNavigation} from "react-native-paper";
 import * as Location from "expo-location";
 import GestureRecognizer from "react-native-swipe-gestures";
+import GestureHandler from "react-native-gesture-handler/lib/typescript/web/handlers/GestureHandler";
 
 // https://api.open-meteo.com/v1/forecast?latitude=45.6958&longitude=-0.3287&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min // currently + weekly
 // https://api.open-meteo.com/v1/forecast?latitude=45.6958&longitude=-0.3287&hourly=temperature_2m,weather_code,wind_speed_10m&forecast_days=1 // today per hour
 export default function Index() {
 	const [searchQuery, setSearchQuery] = useState("");
-	const [searchPressed, setSearchPressed] = useState(false);
 	const [locationPressed, setLocationPressed] = useState(false);
 	const [text, setText] = useState("Currently");
-	const [location, setLocation] = useState(null);
 	const [errorMsg, setErrorMsg] = useState("");
 	const [suggestions, setSuggestions] = useState([]);
-	const [lastResponse, setLastResponse] = useState(null);
 	const [response, setResponse] = useState(null);
+	const [lastResponse, setLastResponse] = useState(null);
 	const [index, setIndex] = useState(0);
+	const [currentWeeklyWeather, setCurrentWeeklyWeather] = useState(null);
+	const [dailyWeather, setDailyWeather] = useState(null);
 
 	const routes = [
 		{key: "currently", title: "Currently", focusedIcon: "calendar-today"},
@@ -33,7 +36,7 @@ export default function Index() {
 		{key: "weekly", title: "Weekly", focusedIcon: "calendar-month"},
 	];
 
-	const handleIndexChange = (newIndex) => {
+	const handleIndexChange = (newIndex: number) => {
 		if (newIndex < 0) {
 			newIndex = 2;
 		} else if (newIndex > 2) {
@@ -44,6 +47,33 @@ export default function Index() {
 		if (newIndex === 1) setText("Today");
 		if (newIndex === 2) setText("Weekly");
 	};
+
+	const fetchWeather = async (latitude: number, longitude: number) => {
+		try {
+			let response = await fetch(
+				`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min`
+			);
+			let data = await response.json();
+			if (data) {
+				setCurrentWeeklyWeather(data);
+			} else {
+				setErrorMsg("Error while fetching the weather data.");
+				return;
+			}
+			response = await fetch(
+				`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,weather_code,wind_speed_10m&forecast_days=1`
+			);
+			data = await response.json();
+			if (data) {
+				setDailyWeather(data);
+			} else {
+				setErrorMsg("Error while fetching the weather data.");
+				return;
+			}
+		} catch (error) {
+			setErrorMsg("Error while fetching the weather data.");
+		}
+	}
 
 	const fetchCities = async (query, count) => {
 		try {
@@ -63,7 +93,7 @@ export default function Index() {
 				setSuggestions([]);
 			}
 		} catch (error) {
-			console.error("Erreur lors de la récupération des villes :", error);
+			setErrorMsg("Error while fetching cities.");
 			setSuggestions([]);
 		}
 	};
@@ -77,30 +107,29 @@ export default function Index() {
 			return;
 		}
 		setLocationPressed(false);
-		setSearchPressed(true);
 		setLastResponse(response);
 		if (!response) {
-			setErrorMsg(`Aucun résultat trouvé pour \"${searchQuery}\".`);
+			setErrorMsg(`Nothing found for \"${searchQuery}\".`);
 		} else {
 			setErrorMsg("");
+			fetchWeather(response.latitude, response.longitude)
 		}
 		setSearchQuery("");
 		setSuggestions([]);
 	};
 
 	const handleGeolocationPress = async () => {
-		setSearchPressed(false);
 		setLocationPressed(true);
 		setErrorMsg("");
 
 		let {status} = await Location.requestForegroundPermissionsAsync();
 		if (status !== "granted") {
-			setErrorMsg("La localisation est désactivée. Activez-la dans les paramètres.");
+			setErrorMsg("Location is disabled. Please enable it in the settings.");
 			return;
 		}
 
 		let location = await Location.getCurrentPositionAsync({});
-		setLocation(location.coords);
+		await fetchWeather(location.coords.latitude, location.coords.longitude)
 	};
 
 	const handleCitySelect = (item) => {
@@ -114,9 +143,13 @@ export default function Index() {
 			onSwipeLeft={() => handleIndexChange(index + 1)}
 			onSwipeRight={() => handleIndexChange(index - 1)}
 			style={{flex: 1}}
+			waitFor={GestureHandler.ScrollView}
 		>
 			<TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-				<View style={styles.container}>
+				<ImageBackground
+					source={{uri: 'https://cdn.futura-sciences.com/cdn-cgi/image/width=1920,quality=60,format=auto/sources/images/actu/ciel-bleu_01.jpg'}}
+					resizeMode="cover"
+					style={styles.container}>
 					<Appbar.Header style={styles.header}>
 						<Appbar.Action color={"white"} icon="magnify" onPress={handleSearchPress}/>
 						<View style={styles.searchContainer}>
@@ -156,28 +189,55 @@ export default function Index() {
 								/>
 							</View>
 						)}
-						<View style={styles.textContainer}>
-							{!errorMsg && <Text style={styles.text}>{text}</Text>}
-							{searchPressed && lastResponse ? (
-									<Text style={styles.text}>{lastResponse.name}</Text>
-								) :
-								locationPressed && location ? (
-									<Text style={styles.text}>
-										Latitude: {location.latitude} {"\n"}Longitude: {location.longitude}
-									</Text>
-								) : errorMsg ? (
-									<Text style={styles.errorText}>{errorMsg}</Text>
-								) : locationPressed && <Text style={styles.text}>Obtention des coordonnées...</Text>}
-						</View>
+						<ScrollView contentContainerStyle={{flexGrow: 1}}>
+							<View style={{flex: 1, padding: 20}} onStartShouldSetResponder={() => true}>
+								{!errorMsg && <Text style={styles.text}>{text}</Text>}
+								{!errorMsg && locationPressed ?
+									(<Text style={styles.text}>
+										Your position
+									</Text>) : !errorMsg && lastResponse &&
+									(<Text style={styles.text}>
+										{lastResponse.name}{"\n"}
+										{lastResponse.admin1}{"\n"}
+										{lastResponse.country}
+									</Text>)
+								}
+								{
+									errorMsg ? (
+										<View style={{flex: 1, justifyContent: "center"}}>
+											<Text style={styles.errorText}>{errorMsg}</Text>
+										</View>
+									) : index === 0 && currentWeeklyWeather && currentWeeklyWeather.current ? (
+										<Text style={styles.text}>
+											{currentWeeklyWeather.current.temperature_2m}°C{"\n"}
+											{currentWeeklyWeather.current.weather_code}{"\n"}
+											{currentWeeklyWeather.current.wind_speed_10m}km/h
+										</Text>
+									) : index === 1 && dailyWeather && dailyWeather.hourly && dailyWeather.hourly.time ? (
+										dailyWeather.hourly.time.map((entry, index) => (
+											<Text key={index} style={styles.text}>
+												{entry.split("T")[1]} {dailyWeather.hourly.temperature_2m[index]}°C {dailyWeather.hourly.weather_code[index]} {dailyWeather.hourly.wind_speed_10m[index]} km/h
+											</Text>
+										))
+									) : index === 2 && currentWeeklyWeather && currentWeeklyWeather.daily && currentWeeklyWeather.daily.time && (
+										currentWeeklyWeather.daily.time.map((entry, index) => (
+											<Text key={index} style={styles.text}>
+												{entry.split("T")[0]} {currentWeeklyWeather.daily.temperature_2m_min[index]}°C {currentWeeklyWeather.daily.temperature_2m_max[index]}°C {currentWeeklyWeather.daily.weather_code[index]}
+											</Text>
+										))
+									)}
+							</View>
+						</ScrollView>
 					</View>
 
 					<BottomNavigation
+						barStyle={{backgroundColor: 'transparent'}}
 						style={{flex: 0}}
 						navigationState={{index, routes}}
 						onIndexChange={handleIndexChange}
 						renderScene={() => null}
 					/>
-				</View>
+				</ImageBackground>
 
 			</TouchableWithoutFeedback>
 		</GestureRecognizer>
@@ -234,12 +294,6 @@ const styles = StyleSheet.create({
 		borderBottomWidth: 1,
 		borderBottomColor: "#ddd",
 		fontSize: 16,
-	},
-	textContainer: {
-		flex: 1,
-		justifyContent: "center",
-		alignItems: "center",
-		padding: 20,
 	},
 	text: {
 		fontSize: 20,
