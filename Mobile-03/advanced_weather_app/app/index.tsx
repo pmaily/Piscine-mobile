@@ -3,6 +3,7 @@ import {
 	FlatList,
 	ImageBackground,
 	Keyboard,
+	SafeAreaView,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -33,24 +34,51 @@ export default function Index() {
 	});
 	const [isSwiping, setIsSwiping] = useState(false);
 	const [swipeTimeout, setSwipeTimeout] = useState(null);
+	const [containerWidth, setContainerWidth] = useState(0);
+	const [scrollParentenabled, setScrollParentEnabled] = useState(true);
 
-	const getData = () => {
+	const getDailyData = () => {
 		return {
 			labels: weather.daily.time,
 			datasets: [
 				{
 					data: weather.daily.temperature_2m,
-					color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`, // optional
+					color: (opacity = 1) => `rgba(0, 255, 150, ${opacity})`, // optional
 					strokeWidth: 2
 				}
 			],
-			legend: ["Rainy Days"]
+			legend: ["Temperature"]
+		}
+	};
+
+	const getWeeklyData = () => {
+		return {
+			labels: weather.weekly.time,
+			datasets: [
+				{
+					data: weather.weekly.temperature_2m_min,
+					color: (opacity = 1) => `rgba(0, 150, 255, ${opacity})`, // optional
+					strokeWidth: 2
+				},
+				{
+					data: weather.weekly.temperature_2m_max,
+					color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`, // optional
+					strokeWidth: 2
+				}
+			],
+			legend: ["Temperature"]
 		}
 	};
 
 	const chartConfig = {
-		color: (opacity = 1) => `gray`,
-		strokeWidth: 5,
+		color: (opacity = 1) => `white`,
+		strokeWidth: 0,
+		backgroundGradientFromOpacity: 0,
+		backgroundGradientToOpacity: 0,
+		propsForBackgroundLines: {
+			strokeWidth: 0,
+			strokeDasharray: "4"
+		}
 	};
 
 	const routes = [
@@ -226,6 +254,11 @@ export default function Index() {
 		handleSearchPress();
 	};
 
+	const onLayout = (event) => {
+		const {width} = event.nativeEvent.layout;
+		setContainerWidth(width);
+	};
+
 	return (
 		<GestureHandlerRootView style={{flex: 1}}>
 			<PanGestureHandler onHandlerStateChange={handlePanGesture}>
@@ -275,141 +308,281 @@ export default function Index() {
 										/>
 									</View>
 								)}
-								<ScrollView contentContainerStyle={{flexGrow: 1}}>
-									<View style={{flex: 1, padding: 20}} onStartShouldSetResponder={() => true}>
-										{!errorMsg && <Text style={[styles.text, {fontSize: 40}]}>{text}</Text>}
-										{!errorMsg && locationPressed ?
-											(<Text style={[styles.text, {fontSize: 20}]}>
-												Your position
-											</Text>) : !errorMsg && lastResponse &&
-											(<Text style={[styles.text, {fontSize: 20}]}>
-												<Text style={{fontWeight: "bold"}}>
-													{lastResponse.name}{" "}
-												</Text>
-												{lastResponse.admin1}{lastResponse.admin1 && ","} {lastResponse.country}
-											</Text>)
-										}
-										{
-											errorMsg ? (
-												<View style={{flex: 1, justifyContent: "center"}}>
-													<Text style={styles.errorText}>{errorMsg}</Text>
-												</View>
-											) : index === 0 && weather && weather.current ? (
-												<View style={{flex: 1, marginTop: 50}}>
-													<View style={{display: "flex", flexDirection: "row"}}>
-														<View style={{flex: 4}}>
+								<SafeAreaView style={{flex: 1}}>
+									<ScrollView
+										onTouchStart={() => setScrollParentEnabled(true)}
+										keyboardShouldPersistTaps="handled"
+										scrollEnabled={scrollParentenabled}
+										style={{flex: 1}}
+										contentContainerStyle={{flexGrow: 1}}>
+
+										<View style={{flex: 1, padding: 20}}>
+											{!errorMsg && <Text style={[styles.text, {fontSize: 40}]}>{text}</Text>}
+											{!errorMsg && locationPressed ?
+												(<Text style={[styles.text, {fontSize: 20}]}>
+													Your position
+												</Text>) : !errorMsg && lastResponse &&
+												(<Text style={[styles.text, {fontSize: 20}]}>
+													<Text style={{fontWeight: "bold"}}>
+														{lastResponse.name}{" "}
+													</Text>
+													{lastResponse.admin1}{lastResponse.admin1 && ","} {lastResponse.country}
+												</Text>)
+											}
+											{
+												errorMsg ? (
+													<View style={{flex: 1, justifyContent: "center"}}>
+														<Text style={styles.errorText}>{errorMsg}</Text>
+													</View>
+												) : index === 0 && weather && weather.current ? (
+													<View style={{flex: 1, marginTop: 50}}>
+														<View style={{display: "flex", flexDirection: "row"}}>
+															<View style={{flex: 4}}>
+																<BlurView
+																	intensity={30}
+																	tint="dark"
+																	style={styles.blurview}
+																>
+																	<Icon
+																		source="thermometer"
+																		color={weather.current.temperature_2m > 20 ? "red" : weather.current.temperature_2m > 12 ? "orange" : "#00d0f5"}
+																		size={80}
+																	/>
+																	<Text style={styles.blurtext}>
+																		{weather.current.temperature_2m}
+																		<Icon size={20} source="temperature-celsius"
+																			  color={"white"}/>
+																	</Text>
+
+																</BlurView>
+															</View>
+															<View style={{flex: 3}}>
+																<BlurView intensity={30} tint="dark"
+																		  style={[styles.blurview, {justifyContent: "center"}]}>
+																	{(() => {
+																		const {
+																			icon,
+																			color,
+																			description
+																		} = getWeatherIconAndColor(weather.current.weather_code);
+																		return (
+																			<View>
+																				<Icon
+																					source={icon}
+																					color={color}
+																					size={80}
+																				/>
+																				<Text style={{
+																					textAlign: "center",
+																					color: "white"
+																				}}>{description}</Text>
+																			</View>
+																		);
+																	})()}
+																</BlurView>
+															</View>
+														</View>
+														<View>
 															<BlurView
 																intensity={30}
 																tint="dark"
 																style={styles.blurview}
 															>
 																<Icon
-																	source="thermometer"
-																	color={weather.current.temperature_2m > 20 ? "red" : weather.current.temperature_2m > 12 ? "orange" : "#00d0f5"}
+																	source="weather-windy"
+																	color={"lightgray"}
 																	size={80}
 																/>
 																<Text style={styles.blurtext}>
-																	{weather.current.temperature_2m}
-																	<Icon size={20} source="temperature-celsius"
-																		  color={"white"}/>
+																	{weather.current.wind_speed_10m} km/h
 																</Text>
-
 															</BlurView>
 														</View>
-														<View style={{flex: 3}}>
-															<BlurView intensity={30} tint="dark"
-																	  style={[styles.blurview, {justifyContent: "center"}]}>
-																{/* Exécuter la logique en dehors du JSX */}
-																{(() => {
+													</View>
+												) : index === 1 && weather && weather.daily && weather.daily.time ? (
+													<View style={{flex: 1}}>
+
+														<BlurView intensity={30} tint="dark" onLayout={onLayout}
+																  style={{
+																	  overflow: "hidden",
+																	  borderRadius: 10,
+																	  marginTop: 20
+																  }}>
+															<LineChart
+																data={getDailyData()}
+																width={containerWidth}
+																height={256}
+																verticalLabelRotation={30}
+																chartConfig={chartConfig}
+																formatXLabel={(label) => {
+																	const hour = label.split('T')[1];
+																	const test = parseInt(hour.split(':')[0]);
+																	return test % 4 === 0 ? hour : '';
+																}}
+																formatYLabel={(value) => `${Math.round(value)}°C`}
+																bezier
+															/>
+														</BlurView>
+														<View style={{maxHeight: 160, paddingTop: 10}}>
+															<ScrollView
+																keyboardShouldPersistTaps="handled"
+																onTouchStart={() => setScrollParentEnabled(false)}
+																onMomentumScrollEnd={() => setScrollParentEnabled(true)}
+																contentContainerStyle={{flexGrow: 1}}>
+																{weather.daily.time.map((item, index) => {
 																	const {
 																		icon,
-																		color,
-																		description
-																	} = getWeatherIconAndColor(weather.current.weather_code);
+																		color
+																	} = getWeatherIconAndColor(weather.daily.weather_code[index]);
+
 																	return (
-																		<View>
-																			<Icon
-																				style={{justifyContent: "center"}}
-																				source={icon}
-																				color={color}
-																				size={80}
-																			/>
-																			<Text style={{
-																				textAlign: "center",
-																				color: "white"
-																			}}>{description}</Text>
+																		<View key={index}
+																			  style={{marginBottom: 3}}>
+																			<View style={{flex: 1}}>
+																				<BlurView intensity={30}
+																						  tint="dark"
+																						  style={[styles.blurview2]}>
+																					<Text style={{
+																						flex: 1,
+																						textAlign: "center",
+																						color: "white",
+																						fontSize: 20,
+																						fontWeight: "bold"
+																					}}>
+																						{item.split("T")[1]}
+																					</Text>
+																					<View style={{flex: 1, alignItems: "center"}}>
+																						<Icon
+																							source={icon}
+																							color={color}
+																							size={40}
+																						/>
+																					</View>
+																					<Text style={{
+																						flex: 1,
+																						textAlign: "center",
+																						color: "white",
+																						fontSize: 20,
+																						fontWeight: "500"
+																					}}>
+																						{weather.daily.temperature_2m[index]}°C
+																					</Text>
+																					<View style={{
+																						flex: 1,
+																						display: "flex",
+																						flexDirection: "column",
+																						alignItems: "center",
+																					}}>
+																						<Icon
+																							source={"weather-windy"}
+																							color={"lightgray"}
+																							size={40}
+																						/>
+																						<Text style={{
+																							textAlign: "center",
+																							color: "white"
+																						}}>
+																							{weather.daily.wind_speed_10m[index]} km/h
+																						</Text>
+																					</View>
+																				</BlurView>
+																			</View>
 																		</View>
 																	);
-																})()}
-															</BlurView>
+																})}
+															</ScrollView>
 														</View>
+
 													</View>
-													<View>
-														<BlurView
-															intensity={30}
-															tint="dark"
-															style={styles.blurview}
-														>
-															<Icon
-																source="weather-windy"
-																color={"lightgray"}
-																size={80}
+
+												) : index === 2 && weather && weather.weekly && weather.weekly.time && (
+													<View style={{flex: 1}}>
+
+														<BlurView intensity={30} tint="dark" onLayout={onLayout}
+																  style={{
+																	  overflow: "hidden",
+																	  borderRadius: 10,
+																	  marginTop: 20
+																  }}>
+															<LineChart
+																data={getWeeklyData()}
+																width={containerWidth}
+																height={256}
+																verticalLabelRotation={30}
+																chartConfig={chartConfig}
+																formatXLabel={(label) => {
+																	return label.split('-')[2] + '/' + label.split('-')[1];
+																}}
+																formatYLabel={(value) => `${Math.round(value)}°C`}
+																bezier
 															/>
-															<Text style={styles.blurtext}>
-																{weather.current.wind_speed_10m} km/h
-															</Text>
 														</BlurView>
+														<View style={{maxHeight: 160, paddingTop: 10}}>
+															<ScrollView
+																keyboardShouldPersistTaps="handled"
+																onTouchStart={() => setScrollParentEnabled(false)}
+																onMomentumScrollEnd={() => setScrollParentEnabled(true)}
+																contentContainerStyle={{flexGrow: 1}}>
+																{weather.weekly.time.map((item, index) => {
+																	const {
+																		icon,
+																		color
+																	} = getWeatherIconAndColor(weather.weekly.weather_code[index]);
+
+																	return (
+																		<View key={index}
+																			  style={{marginBottom: 3}}>
+																			<View style={{flex: 1}}>
+																				<BlurView intensity={30}
+																						  tint="dark"
+																						  style={[styles.blurview2]}>
+																					<Text style={{
+																						flex: 1,
+																						textAlign: "center",
+																						color: "white",
+																						fontSize: 20,
+																						fontWeight: "bold"
+																					}}>
+																						{item.split("-")[2]}{"/"}{item.split("-")[1]}
+																					</Text>
+																					<View style={{flex: 1, alignItems: "center"}}>
+																						<Icon
+																							source={icon}
+																							color={color}
+																							size={40}
+																						/>
+																					</View>
+																					<Text style={{
+																						flex: 1,
+																						textAlign: "center",
+																						color: "lightblue",
+																						fontSize: 20,
+																						fontWeight: "500"
+																					}}>
+																						{weather.weekly.temperature_2m_min[index]}°C
+																					</Text>
+																					<Text style={{
+																						flex: 1,
+																						textAlign: "center",
+																						color: "orange",
+																						fontSize: 20,
+																						fontWeight: "500"
+																					}}>
+																						{weather.weekly.temperature_2m_max[index]}°C
+																					</Text>
+																				</BlurView>
+																			</View>
+																		</View>
+																	);
+																})}
+															</ScrollView>
+														</View>
+
 													</View>
-												</View>
-											) : index === 1 && weather && weather.daily && weather.daily.time ? (
-												<LineChart
-													data={getData()}
-													width={320}
-													height={256}
-													verticalLabelRotation={30}
-													chartConfig={chartConfig}
-													formatXLabel={(label) => {
-														const hour = label.split('T')[1];
-														const test = parseInt(hour.split(':')[0]);
-														return test % 4 === 0 ? hour : '';
-													}}
-													bezier
-												/>
-												// weather.daily.time.map((entry, index) => (
-												// <View>
-												// 	<View style={{flex: 1}}>
-												// 		<BlurView intensity={30} tint="dark"
-												// 				  style={[styles.blurview, {justifyContent: "center"}]}>
-												// 			{/* Exécuter la logique en dehors du JSX */}
-												// 			{(() => {
-												// 				const {
-												// 					icon,
-												// 					color
-												// 				} = getWeatherIconAndColor(weather.current.weather_code);
-												// 				return (
-												// 					<Icon
-												// 						source={icon}
-												// 						color={color}
-												// 						size={80}
-												// 					/>
-												// 				);
-												// 			})()}
-												// 		</BlurView>
-												// 	</View>
-												// 	<Text key={index} style={styles.text}>
-												// 		{entry.split("T")[1]} {weather.daily.temperature_2m[index]}°C {getWeatherDescription(weather.daily.weather_code[index])} {weather.daily.wind_speed_10m[index]} km/h
-												// 	</Text>
-												// </View>
-												// ))
-											) : index === 2 && weather && weather.weekly && weather.weekly.time && (
-												weather.weekly.time.map((entry, index) => (
-													<Text key={index} style={styles.text}>
-														{entry.split("T")[0]} {weather.weekly.temperature_2m_min[index]}°C {weather.weekly.temperature_2m_max[index]}°C {getWeatherDescription(weather.weekly.weather_code[index])}
-													</Text>
-												))
-											)}
-									</View>
-								</ScrollView>
+												)}
+										</View>
+									</ScrollView>
+								</SafeAreaView>
 							</View>
 
 							<BottomNavigation
@@ -426,7 +599,8 @@ export default function Index() {
 				</View>
 			</PanGestureHandler>
 		</GestureHandlerRootView>
-	);
+	)
+		;
 }
 
 const styles = StyleSheet.create({
@@ -492,13 +666,22 @@ const styles = StyleSheet.create({
 	},
 	blurview: {
 		overflow: "hidden",
+		borderRadius: 10,
 		flex: 1,
 		flexDirection: "row",
 		alignItems: "center",
 		padding: 10,
 		margin: 5,
-		top: 0, left: 0, right: 0, bottom: 0,
+	},
+	blurview2: {
+		overflow: "hidden",
 		borderRadius: 10,
+		flex: 1,
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		padding: 10,
+
 	},
 	blurtext: {
 		flex: 1,
