@@ -62,11 +62,11 @@ export default function Index() {
 				},
 				{
 					data: weather.weekly.temperature_2m_max,
-					color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`, // optional
+					color: (opacity = 1) => `#ff4200`, // optional
 					strokeWidth: 2
 				}
 			],
-			legend: ["Temperature"]
+			legend: ["T min", "T max"]
 		}
 	};
 
@@ -555,7 +555,7 @@ export default function Index() {
 																					<Text style={{
 																						flex: 1,
 																						textAlign: "center",
-																						color: "lightblue",
+																						color: "#00aaff",
 																						fontSize: 20,
 																						fontWeight: "500"
 																					}}>
@@ -564,7 +564,7 @@ export default function Index() {
 																					<Text style={{
 																						flex: 1,
 																						textAlign: "center",
-																						color: "orange",
+																						color: "#ff5900",
 																						fontSize: 20,
 																						fontWeight: "500"
 																					}}>
