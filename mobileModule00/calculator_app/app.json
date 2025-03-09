@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ex02",
-    "slug": "ex02",
+    "name": "calculator_app",
+    "slug": "calculator_app",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "",
@@ -16,11 +16,6 @@
         "foregroundImage": "",
         "backgroundColor": "#ffffff"
       }
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": ""
     },
     "plugins": [
       "expo-router",
