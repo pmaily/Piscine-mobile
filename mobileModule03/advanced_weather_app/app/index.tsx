@@ -178,8 +178,6 @@ export default function Index() {
 				dailyResponse.json()
 			]);
 
-			console.log(weeklyData.current);
-
 			setWeather({
 				current: weeklyData.current,
 				daily: dailyData.hourly,
