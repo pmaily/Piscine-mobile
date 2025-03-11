@@ -3,14 +3,14 @@ import {addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, whe
 
 const addNote = async (title: string, feeling: string, content: string) => {
 	try {
-		const userId = auth.currentUser?.uid; // Récupère l'ID de l'utilisateur connecté
+		const email = auth.currentUser?.email; // Récupère l'ID de l'utilisateur connecté
 
 		const entryData = {
 			title,
 			feeling,
 			content,
 			date: serverTimestamp(),
-			userId
+			email
 		};
 
 		const entriesCollection = collection(firestore, 'notes');
@@ -24,20 +24,20 @@ const addNote = async (title: string, feeling: string, content: string) => {
 
 const getUserNotes = async () => {
 	try {
-		const userId = auth.currentUser?.uid; // Récupère l'ID de l'utilisateur connecté
+		const email = auth.currentUser?.email;
 
-		if (userId) {
+		if (email) {
 			const notesCollection = collection(firestore, 'notes');
-			const q = query(notesCollection, where("userId", "==", userId)); // Crée une requête pour récupérer les notes de cet utilisateur
+			const q = query(notesCollection, where("email", "==", email));
 
-			const querySnapshot = await getDocs(q); // Exécute la requête
+			const querySnapshot = await getDocs(q);
 			const notes = [];
 
 			querySnapshot.forEach((doc) => {
-				notes.push({ ...doc.data(), id: doc.id }); // Ajoute les données de chaque document dans un tableau
+				notes.push({ ...doc.data(), id: doc.id });
 			});
 
-			return notes; // Retourne les notes récupérées
+			return notes;
 		} else {
 			console.error("Aucun utilisateur connecté.");
 			return [];
@@ -49,8 +49,8 @@ const getUserNotes = async () => {
 
 const deleteNote = async (noteId: string) => {
 	try {
-		const noteRef = doc(firestore, 'notes', noteId);  // Référence au document à supprimer
-		await deleteDoc(noteRef);  // Suppression du document
+		const noteRef = doc(firestore, 'notes', noteId);
+		await deleteDoc(noteRef);
 		console.log('Note supprimée avec succès.');
 	} catch (error) {
 		console.error('Erreur lors de la suppression de la note : ', error);
