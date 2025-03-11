@@ -2,8 +2,6 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
-const GOOGLE_CLIENT_ID = "188341974524-opv42atf95tnuk83jch9mcvaqg6jtmpk.apps.googleusercontent.com";
-
 app.get('/redirect', (req, res) => {
 	const { code, state } = req.query;
 	console.log('Paramètres de la requête:', req.query);
