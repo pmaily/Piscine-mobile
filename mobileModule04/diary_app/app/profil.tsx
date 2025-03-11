@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {Button, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {addNote, deleteNote, getUserNotes} from "@/diaryManager";
+import {addNote, deleteNote, getUserNotes} from "@/conf/diaryManager";
 import {Appbar, Icon} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {BlurView} from "expo-blur";
 import {feelings} from "@/constants/feelings";
 import AddNoteModal from "@/components/addNoteModal";
 import DetailsNoteModal from "@/components/detailsNoteModal";
-import {logout} from "@/authConfig";
+import {logout} from "@/conf/authConfig";
 import {useRouter} from "expo-router";
 
 const BOTTOM_APPBAR_HEIGHT = 70;

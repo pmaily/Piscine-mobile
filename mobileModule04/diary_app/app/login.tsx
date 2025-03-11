@@ -6,11 +6,11 @@ import {
 	handleGoogleAuthentication,
 	useGithubAuthRequest,
 	useGoogleAuthRequest
-} from '@/authConfig';
+} from '@/conf/authConfig';
 import {FontAwesome, MaterialCommunityIcons} from 'react-native-vector-icons';
 import {useRouter} from "expo-router";
 import ErrorModal from "@/components/ErrorModal";
-import {auth} from "@/firebaseConfig";
+import {auth} from "@/conf/firebaseConfig";
 
 
 WebBrowser.maybeCompleteAuthSession();

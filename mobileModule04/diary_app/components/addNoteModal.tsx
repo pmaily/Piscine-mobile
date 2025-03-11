@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import {Icon} from "react-native-paper";
 import {feelings} from "@/constants/feelings";
-import {addNote} from "@/diaryManager";
+import {addNote} from "@/conf/diaryManager";
 import {stylesModal} from "@/components/stylesModal";
 
 interface AddNoteModalProps {

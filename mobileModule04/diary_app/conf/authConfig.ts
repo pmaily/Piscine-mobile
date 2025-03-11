@@ -1,4 +1,4 @@
-import {auth, GithubAuthProvider, GoogleAuthProvider, signInWithCredential} from "@/firebaseConfig";
+import {auth, GithubAuthProvider, GoogleAuthProvider, signInWithCredential} from "@/conf/firebaseConfig";
 import {CodeChallengeMethod, Prompt, useAuthRequest} from "expo-auth-session";
 import {signOut} from "@firebase/auth";
 
