@@ -29,8 +29,8 @@ const DetailsNoteModal: React.FC<DetailsNoteModalProps> = ({visible, note, onClo
 						<Text style={stylesModal.modalText}>{note.content}</Text>
 					</ScrollView>
 					<View style={stylesModal.modalButtons}>
-						<Button title="Fermer" onPress={onClose}/>
-						<Button title="Supprimer" color="red" onPress={() => onDelete(note.id)}/>
+						<Button title="Close" onPress={onClose}/>
+						<Button title="Delete" color="red" onPress={() => onDelete(note.id)}/>
 					</View>
 				</View>
 			</View>

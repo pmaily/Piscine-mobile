@@ -11,6 +11,7 @@ import {FontAwesome, MaterialCommunityIcons} from 'react-native-vector-icons';
 import {useRouter} from "expo-router";
 import ErrorModal from "@/components/ErrorModal";
 import {auth} from "@/conf/firebaseConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 WebBrowser.maybeCompleteAuthSession();
@@ -26,7 +27,6 @@ export default function LoginScreen() {
 	useEffect(() => {
 		const unsubscribe = auth.onAuthStateChanged(user => {
 			if (user) {
-				console.log(user)
 				router.push('/profil');
 			}
 		});
@@ -65,9 +65,10 @@ export default function LoginScreen() {
 		}
 	}, [error]);
 
-	const onLoginSuccess = () => {
+	const onLoginSuccess = async (username: string) => {
+		await AsyncStorage.setItem('username', username);
 		router.push('/profil');
-	}
+	};
 
 	useEffect(() => {
 		handleGoogleAuthentication(requestGoogle, responseGoogle, onLoginSuccess, setError);
@@ -83,14 +84,14 @@ export default function LoginScreen() {
 				<View style={styles.googleButton}>
 					<MaterialCommunityIcons name="google" size={24} color="white" style={styles.icon}/>
 					<Text style={styles.buttonText} onPress={() => handleGoogleLogin()}>
-						Se connecter avec Google
+						Connect with Google
 					</Text>
 				</View>
 
 				<View style={styles.githubButton}>
 					<FontAwesome name="github" size={24} color="white" style={styles.icon}/>
 					<Text style={styles.buttonText} onPress={() => handleGitHubLogin()}>
-						Se connecter avec GitHub
+						Connect with GitHub
 					</Text>
 				</View>
 			</View>

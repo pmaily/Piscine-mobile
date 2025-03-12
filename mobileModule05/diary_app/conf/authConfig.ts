@@ -66,7 +66,7 @@ async function fetchGitHubToken(code: string) {
 	return data.access_token;
 }
 
-function handleGoogleAuthentication(requestGoogle: any, responseGoogle: any, onLoginSuccess: () => void, onError: (error: string) => void) {
+function handleGoogleAuthentication(requestGoogle: any, responseGoogle: any, onLoginSuccess: (username: string) => void, onError: (error: string) => void) {
 	if (responseGoogle?.type === 'success') {
 		const {code} = responseGoogle.params;
 		fetchGoogleIdToken(code, requestGoogle.codeVerifier)
@@ -74,7 +74,7 @@ function handleGoogleAuthentication(requestGoogle: any, responseGoogle: any, onL
 				const credential = GoogleAuthProvider.credential(id_token);
 				signInWithCredential(auth, credential)
 					.then(userCredential => {
-						onLoginSuccess();
+						onLoginSuccess(userCredential?._tokenResponse?.displayName || "Unknown");
 					})
 					.catch(error => onError("Error during Google authentication"));
 			})
@@ -82,7 +82,7 @@ function handleGoogleAuthentication(requestGoogle: any, responseGoogle: any, onL
 	}
 }
 
-function handleGithubAuthentication(responseGitHub: any, onLoginSuccess: () => void, onError: (error: string) => void) {
+function handleGithubAuthentication(responseGitHub: any, onLoginSuccess: (username: string) => void, onError: (error: string) => void) {
 	if (responseGitHub?.type === 'success') {
 		const {code} = responseGitHub.params;
 		fetchGitHubToken(code)
@@ -90,7 +90,7 @@ function handleGithubAuthentication(responseGitHub: any, onLoginSuccess: () => v
 				const credential = GithubAuthProvider.credential(token);
 				signInWithCredential(auth, credential)
 					.then(userCredential => {
-						onLoginSuccess();
+						onLoginSuccess(userCredential?._tokenResponse?.screenName || "Unknown");
 					})
 					.catch(error => onError("Account with the same email address already exists"));
 			})

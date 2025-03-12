@@ -48,11 +48,11 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({visible, onClose, onAdd}) =>
 				<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 					<View style={stylesModal.modalOverlay}>
 						<View style={stylesModal.modalContent}>
-							<Text style={stylesModal.modalTitle}>Ajouter une note</Text>
+							<Text style={stylesModal.modalTitle}>Add a note</Text>
 
 							<TextInput
 								style={stylesModal.input}
-								placeholder="Titre"
+								placeholder="Title"
 								placeholderTextColor="#ddd"
 								value={newTitle}
 								onChangeText={setNewTitle}
@@ -77,7 +77,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({visible, onClose, onAdd}) =>
 
 							<TextInput
 								style={[stylesModal.input, stylesModal.textArea]}
-								placeholder="Contenu"
+								placeholder="Content"
 								placeholderTextColor="#ddd"
 								value={newContent}
 								onChangeText={setNewContent}
@@ -85,8 +85,8 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({visible, onClose, onAdd}) =>
 							/>
 
 							<View style={stylesModal.modalButtons}>
-								<Button title="Annuler" onPress={onClose}/>
-								<Button title="Ajouter" disabled={isAddDisabled} onPress={handleAddNote}/>
+								<Button title="Cancel" onPress={onClose}/>
+								<Button title="Add" disabled={isAddDisabled} onPress={handleAddNote}/>
 							</View>
 						</View>
 					</View>
